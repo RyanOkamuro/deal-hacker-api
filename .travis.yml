@@ -1,0 +1,10 @@
+language: node_js
+node_js: node
+services: mongodb
+deploy:
+  provider: heroku
+  api_key:
+    secure: xYbooqkI5ALeSL/aSvytc4Hj+9ehzBfzVZAspQuw1rpY1IXkM9JjN9I8n8Epyu/nK7gGG9elA9se+x04CFpC9joZSKllXew0hXmlMnaMxH4xvXHR9GckxRwvK2OJSvUgTNIFNVY4S6fcyuEB5TsbYyTH47niCyq+FLsAcRkKq/qXO9E0y6oz1GaIaJ4iCsvp3uQqC5wRDzyuU+Djd4PPBze3wSgaev05vRc9cZzKT38ng0Kzcd4vj8mYCtjpHaEZcQ833ihwPzmh8I+n9t+G8sBB9PPMeX/89m8FIDbmBs3A3V4c2sm9a+0gzTnOSskZ3+ZOVQfOLxC7x2vZifwhHyS4QcMIF+XvPObl2FwJfJH7PpvYRUcd28c4Pzm4ejjJ2CMzWHqlpq10lNMrPeDXA7uXO6eGGXZZqm2SLFowWXszDcOa6EaqfgBuYzMhj4wkFpKE8JoYgtdvuU3KH/wjv3PoC3GVoQorq+7w3T3ezsZLFZQesMKwra+RZ9heXMpzNGWYTJH/xPpYHurzPWYxpPzhAP+D3vYnBKRoOi8j+fz+tQfUZUQMaKxh/+USko40X5qd0b3BuKVCAcw/xOMWWQma9Q4iXNMCijlw+WnbaFLRTXPofLbDGegm1xabbtlkGzUZlfUTUxgjcfPWx0pv6od2aQmo20nrmFY1iUEGw+M=
+  app: deal-hacker-api
+  on:
+    repo: RyanOkamuro/deal-hacker-api
