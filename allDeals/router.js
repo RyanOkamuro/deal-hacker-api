@@ -82,6 +82,13 @@ router.post('/', jsonParser, (req, res) => {
       .catch(err => res.status(500).json({message: 'Internal server error'}));
   });
 
+  router.delete('/:id', (req, res) => {
+    Deal
+    .findByIdAndRemove(req.params.id)
+    .then(dealItem => res.status(204).end())
+    .catch(err => res.status(500).json({message: 'Internal server error'}));
+  });
+
 router.use('*', function(req, res) {
     res.status(404).json({message: 'Not found'});
   });
