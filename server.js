@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const { router: dealRouter } = require('./allDeals');
 
 mongoose.Promise = global.Promise;
 const {PORT, DATABASE_URL} = require('./config');
@@ -25,9 +25,11 @@ app.use(function (req, res, next) {
     next();
   });
 
-app.get('/api/*', (req, res) => {
-    res.json({ok: true});
-});
+app.use('/deal/', dealRouter);
+
+// app.get('/api/*', (req, res) => {
+//     res.json({ok: true});
+// });
 
 app.use('*', (req, res) => {
     return res.status(404).json({message: 'Not Found'});

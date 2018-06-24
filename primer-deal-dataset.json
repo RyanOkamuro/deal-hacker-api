@@ -2,7 +2,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a511"
     },
-    "id": "1",
     "dealName": "Amazon Fire Stick",
     "productCategory": "Electronics",
     "price": "$15",
@@ -18,7 +17,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a510"
     },
-    "id": "2",
     "dealName": "Dyson DC58/V6 Trigger Cordless Vacuum",
     "productCategory": "Electronics",
     "price": "$149.99",
@@ -34,7 +32,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50a"
     },
-    "id": "3",
     "dealName": "Apple Watch Series 3 Smartwatch: 42mm",
     "productCategory": "Electronics",
     "price": "$309",
@@ -50,7 +47,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50b"
     },
-    "id": "4",
     "dealName": "Dell XPS 13 128GB SSD 8GB RAM",
     "productCategory": "Electronics",
     "price": "$999",
@@ -66,7 +62,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50c"
     },
-    "id": "5",
     "dealName": "Charter Club 700 Thread Count Sheet Set",
     "productCategory": "Home Needs",
     "price": "$49.99",
@@ -82,7 +77,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50d"
     },
-    "id": "6",
     "dealName": "Bulova Men's Two-Tone Stainless Steel Bracelet Watch 43mm",
     "productCategory": "Jewlery",
     "price": "$201.45",
@@ -98,7 +92,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50e"
     },
-    "id": "7",
     "dealName": "Ecovacs Deebot N79 WiFi Robotic Vacuum Cleaner",
     "productCategory": "Electronics",
     "price": "$160",
@@ -114,7 +107,6 @@
     "_id": {
         "$oid": "5b2eac8e9cc1724aa388a50f"
     },
-    "id": "8",
     "dealName": "Logitech G Pro Wired Optical Gaming Mouse w/ RGB Lighting",
     "productCategory": "Electronics",
     "price": "$30",
