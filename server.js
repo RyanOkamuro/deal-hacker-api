@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const { router: usersRouter } = require('./users');
 const { router: dealRouter } = require('./allDeals');
 
 mongoose.Promise = global.Promise;
@@ -25,11 +26,8 @@ app.use(function (req, res, next) {
     next();
   });
 
+app.use('/api/users/', usersRouter);
 app.use('/deal/', dealRouter);
-
-// app.get('/api/*', (req, res) => {
-//     res.json({ok: true});
-// });
 
 app.use('*', (req, res) => {
     return res.status(404).json({message: 'Not Found'});
