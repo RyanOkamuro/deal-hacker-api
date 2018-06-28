@@ -5,30 +5,18 @@ const jsonParser = bodyParser.json();
 
 const {User} = require('../users/models');
 
-// router.get('/', (req, res) => {
-//     Deal 
-//     .find({}).exec()
-//     .then(dealItem => {
-//         res.json({
-//             dealItem: dealItem.map(
-//                 (Deal) => Deal.serialize())
-//         });
-//     })
-//     .catch(err => {
-//         console.error(err);
-//         res.status(500).json({message: 'Internal server error'});
-//     });
-// });
-
-// router.get('/:id', (req,res) => {
-//     Deal
-//     .findById(req.params.id)
-//     .then(Deal => res.json(Deal.serialize()))
-//     .catch(err => {
-//       console.error(err);
-//       res.status(500).json({message: 'Internal server error'});
-//     });
-// });
+router.get('/', (req,res) => {
+  console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.params);
+  console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.body);
+    User
+    .findById(req.user.id)
+    .populate("favorites")
+    .then(User => res.json(User.serialize()))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({message: 'Internal server error'});
+    });
+});
 
 router.post('/', jsonParser, (req, res) => {
     const requiredFields = ['id'];
@@ -40,9 +28,10 @@ router.post('/', jsonParser, (req, res) => {
         return res.status(400).send(message);
       }
     }
-    console.log(req.user);
+    console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.user);
+    console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.body);
       User
-      .findOneAndUpdate({username: req.user.username}, { 
+      .findOneAndUpdate({_id: req.user.id}, { 
         $push: {favorites: req.body.id}
       })
       .populate("favorites")
@@ -74,15 +63,21 @@ router.post('/', jsonParser, (req, res) => {
 //       .catch(err => res.status(500).json({message: 'Internal server error'}));
 //   });
 
-//   router.delete('/:id', (req, res) => {
-//     Deal
-//     .findByIdAndRemove(req.params.id)
-//     .then(dealItem => res.status(204).end())
-//     .catch(err => res.status(500).json({message: 'Internal server error'}));
-//   });
-
-// router.use('*', function(req, res) {
-//     res.status(404).json({message: 'Not found'});
-//   });
+  router.delete('/:id', (req, res) => {
+    User
+    .findOneAndUpdate({_id: req.user.id}, { 
+      $pull: {"favorites": req.params.id}
+    })
+    .populate("favorites")
+    .then(user => {
+      console.log(user)
+      res.status(204).end()
+    }
+  )
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({message: 'Internal server error'});
+    })
+  });
 
 module.exports = {router};
