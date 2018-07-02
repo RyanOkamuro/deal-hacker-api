@@ -12,7 +12,11 @@ const dealSchema = mongoose.Schema({
     favorite: {type: String, required: false},
     favoriteClass: {type: String, required: false},
     productDescription: {type: String, required: true},
-    dealLink: {type: String, required: true}
+    dealLink: {type: String, required: true},
+    comments: [{
+        comment: {type: String},
+        user: {type: mongoose.Schema.Types.ObjectId, ref: "User"}
+    }]
 });
 
 dealSchema.methods.serialize = function() {
@@ -27,7 +31,8 @@ dealSchema.methods.serialize = function() {
         favorite: this.favorite,
         favoriteClass: this.favoriteClass,
         productDescription: this.productDescription,
-        dealLink: this.dealLink
+        dealLink: this.dealLink,
+        comments: this.comments
     };
 }
 

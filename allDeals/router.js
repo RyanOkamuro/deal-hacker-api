@@ -77,7 +77,7 @@ router.post('/', jsonParser, (req, res) => {
       }
     });
       Deal
-      .findByIdAndUpdate(req.params.id, {$set: toUpdate})
+      .findByIdAndUpdate(req.params.id, {$set: toUpdate}, {new: true})
       .then(dealItem => {return res.status(202).json(dealItem)})
       .catch(err => res.status(500).json({message: 'Internal server error'}));
   });

@@ -42,7 +42,7 @@ const jwtAuth = passport.authenticate('jwt', {session: false})
 
 app.use('/deal/', dealRouter);
 app.use('/favorites/', jwtAuth, favoritesRouter);
-app.use('/comments/', commentRouter);
+app.use('/comments/', jwtAuth, commentRouter);
 
 app.get('/api/protected', jwtAuth, (req, res) => {
   return res.json({
