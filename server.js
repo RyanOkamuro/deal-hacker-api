@@ -10,6 +10,7 @@ const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 const { router: usersRouter } = require('./users');
 const { router: dealRouter } = require('./allDeals');
 const { router: favoritesRouter } = require('./favorites');
+const { router: commentRouter } = require('./comments');
 
 
 mongoose.Promise = global.Promise;
@@ -41,6 +42,7 @@ const jwtAuth = passport.authenticate('jwt', {session: false})
 
 app.use('/deal/', dealRouter);
 app.use('/favorites/', jwtAuth, favoritesRouter);
+app.use('/comments/', commentRouter);
 
 app.get('/api/protected', jwtAuth, (req, res) => {
   return res.json({

@@ -16,7 +16,7 @@ const UserSchema = mongoose.Schema({
   },
   firstName: {type: String, default: ''},
   lastName: {type: String, default: ''},
-  favorites: [{type: mongoose.Schema.ObjectId, ref: "Deal"}]
+  favorites: [{type: mongoose.Schema.Types.String, ref: "Deal"}]
 });
 
 UserSchema.methods.serialize = function() {

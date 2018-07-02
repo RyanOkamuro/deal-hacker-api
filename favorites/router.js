@@ -6,8 +6,6 @@ const jsonParser = bodyParser.json();
 const {User} = require('../users/models');
 
 router.get('/', (req,res) => {
-  console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.params);
-  console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.body);
     User
     .findById(req.user.id)
     .populate("favorites")
@@ -28,8 +26,6 @@ router.post('/', jsonParser, (req, res) => {
         return res.status(400).send(message);
       }
     }
-    console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.user);
-    console.log("!!!!!!!!!!!!!!!!!!!!!!!", req.body);
       User
       .findOneAndUpdate({_id: req.user.id}, { 
         $push: {favorites: req.body.id}
@@ -41,27 +37,6 @@ router.post('/', jsonParser, (req, res) => {
         res.status(500).json({message: 'Internal server error'});
       });
   });
-  
-//   router.put('/:id', jsonParser, (req, res) => {
-//     if (!(req.params.id && req.body.id === req.body.id)) {
-//       const message = (
-//         `Request path id (${req.params.id}) and request body id ` +
-//         `(${req.body.id}) must match`);
-//       console.error(message);
-//       return res.status(400).json({message: message});
-//     }
-//     const toUpdate = {};
-//     const updateableFields = ['dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink'];
-//     updateableFields.forEach(field => {
-//       if (req.body[field]) {
-//         toUpdate[field] = req.body[field];
-//       }
-//     });
-//       Deal
-//       .findByIdAndUpdate(req.params.id, {$set: toUpdate})
-//       .then(dealItem => {return res.status(202).json(dealItem)})
-//       .catch(err => res.status(500).json({message: 'Internal server error'}));
-//   });
 
   router.delete('/:id', (req, res) => {
     User
@@ -70,7 +45,6 @@ router.post('/', jsonParser, (req, res) => {
     })
     .populate("favorites")
     .then(user => {
-      console.log(user)
       res.status(204).end()
     }
   )
