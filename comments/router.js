@@ -42,7 +42,7 @@ router.post('/:dealId', jsonParser, (req, res) => {
     }
       Deal
       .findOneAndUpdate({_id: req.params.dealId}, { 
-        $push: {comments: {comment: req.body.userComment, user: req.user.id}}
+        $push: {comments: {comment: req.body.userComment, user: req.user.id, username: req.user.username}}
       })
       .then(deal => res.status(201).json(deal.serialize()))
       .catch(err => {

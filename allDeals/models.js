@@ -15,7 +15,8 @@ const dealSchema = mongoose.Schema({
     dealLink: {type: String, required: true},
     comments: [{
         comment: {type: String},
-        user: {type: mongoose.Schema.Types.ObjectId, ref: "User"}
+        user: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
+        username: {type: mongoose.Schema.Types.String, ref: "User"}
     }]
 });
 
