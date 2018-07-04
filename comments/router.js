@@ -43,8 +43,8 @@ router.post('/:dealId', jsonParser, (req, res) => {
       Deal
       .findOneAndUpdate({_id: req.params.dealId}, { 
         $push: {comments: {comment: req.body.userComment, user: req.user.id, username: req.user.username, _id: req.params.dealId}}
-      })
-      .then(deal => res.status(201).json(deal.serialize()))
+      }, {new: true})
+      .then(deal => res.status(201).json(deal.comments))
       .catch(err => {
         console.error(err);
         res.status(500).json({message: 'Internal server error'});
