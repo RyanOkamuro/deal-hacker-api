@@ -1,12 +1,12 @@
 'use strict';
 
-// require('dotenv').config();
+require('dotenv').config();
 const chai = require('chai');
-const request = require('superagent');
+const request = require('supertest');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
 
-const {Deal} = require('../allDeals/models');
+const {User} = require('../users/models');
 const {app, runServer, closeServer} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
 const expect = chai.expect;
@@ -23,7 +23,7 @@ function seedDealData() {
     for (let i=1; i<=4; i++) {
         seedData.push(generateDealData());
     }
-    return Deal.insertMany(seedData);
+    return User.insertMany(seedData);
 }
 
 let randomDeal = 0;
@@ -66,7 +66,7 @@ function generateDealLink() {
 
 function generateComments() {
     const comments = [{
-        comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price']
+        comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
     }]
     return comments[randomDeal];
 }
@@ -110,37 +110,37 @@ function tearDownDb() {
     describe('GET Deal Name Information', function() {
         it('should list deal information on GET', function() {
             let res; 
-            agent
-                .get('/deal')
+            agent 
+                .get('/favorites')
                 .set('Authorization', `Bearer ${authToken}`)
                 .then(function(_res) {
                     res = _res;
                     expect(res).to.have.status(200);
-                    expect(res.body.dealItem).to.have.lengthOf.at.least(1);
-                    return Deal.count();
+                    expect(res.body.deal).to.have.lengthOf.at.least(1);
+                    return User.count();
                 })
                 .then(function(count) {
-                    expect(res.body.dealItem).to.have.lengthOf(count);
+                    expect(res.body.deal).to.have.lengthOf(count);
                 });
         });
 
         it('should return the correct fields for deal', function() {
             let resDeal;
             agent
-                .get('/deal')
+                .get('/favorites')
                 .set('Authorization', `Bearer ${authToken}`)
                 .then(function(res) {
                     expect(res).to.have.status(200);
                     expect(res).to.be.json;
-                    expect(res.body.dealItem).to.be.a('array');
-                    expect(res.body.dealItem).to.have.lengthOf.at.least(1);
+                    expect(res.body.deal).to.be.a('array');
+                    expect(res.body.deal).to.have.lengthOf.at.least(1);
                     const expectedKeys = ['dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink', 'comments']
-                    res.body.dealItem.forEach(function(saleItem) {
+                    res.body.deal.forEach(function(saleItem) {
                         expect(saleItem).to.be.a('object');
                         expect(saleItem).to.include.keys(expectedKeys);
                     });
-                    resDeal = res.body.dealItem[0];
-                    return Deal.findById(resDeal.id);
+                    resDeal = res.body.deal[0];
+                    return User.findById(resDeal.id);
                 })
                 .then(function(saleItem) {
                     expect(resDeal.id).to.equal(saleItem.id);
@@ -151,77 +151,66 @@ function tearDownDb() {
                     expect(resDeal.seller).to.equal(saleItem.seller);
                     expect(resDeal.productDescription).to.equal(saleItem.productDescription);
                     expect(resDeal.dealLink).to.equal(saleItem.dealLink);
+                    expect(resDeal.comments).to.equal(saleItem.comments);
                 })
         });
     });
 
     describe('POST Deal Information', function() {
         it('should add a deal on POST', function() {
-            const newDeal = generateDealData();
+            const newFavorite = generateDealData();
             agent
-                .post('/deal')
-                .send(newDeal)
+                .set('Authorization', `Bearer ${authToken}`)
+                .post('/favorites')
+                .send(newFavorite)
                 .then(function(res) {
                     expect(res).to.have.status(201);
                     expect(res).to.be.json;
                     expect(res.body).to.be.a('object');
-                    expect(res.body).to.include.keys('dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink')
-                    expect(res.body.dealName).to.equal(newDeal.dealName);
-                    expect(res.body.productCategory).to.equal(newDeal.productCategory);
-                    expect(res.body.price).to.equal(newDeal.price);
-                    expect(res.body.image).to.equal(newDeal.image);
-                    expect(res.body.seller).to.equal(newDeal.seller);
-                    expect(res.body.productDescription).to.equal(newDeal.productDescription);
-                    expect(res.body.dealLink).to.equal(newDeal.dealLink);
+                    expect(res.body).to.include.keys('dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink', 'comments')
+                    expect(res.body.dealName).to.equal(newFavorite.dealName);
+                    expect(res.body.productCategory).to.equal(newFavorite.productCategory);
+                    expect(res.body.price).to.equal(newFavorite.price);
+                    expect(res.body.image).to.equal(newFavorite.image);
+                    expect(res.body.seller).to.equal(newFavorite.seller);
+                    expect(res.body.productDescription).to.equal(newFavorite.productDescription);
+                    expect(res.body.dealLink).to.equal(newFavorite.dealLink);
+                    expect(res.body.comments).to.equal(newFavorite.comments);
                     expect(res.body.id).to.not.be.null;
-                    return Deal.findById(res.body.id);
+                    return User.findById(res.body.id);
                 })
                 .then(function(saleItem) {
-                    expect(saleItem.dealName).to.equal(newDeal.dealName);
-                    expect(saleItem.productCategory).to.equal(newDeal.productCategory);
-                    expect(saleItem.price).to.equal(newDeal.price);
-                    expect(saleItem.image).to.equal(newDeal.image);
-                    expect(saleItem.seller).to.equal(newDeal.seller);
-                    expect(saleItem.productDescription).to.equal(newDeal.productDescription);
-                    expect(saleItem.dealLink).to.equal(newDeal.dealLink);
+                    expect(saleItem.dealName).to.equal(newFavorite.dealName);
+                    expect(saleItem.productCategory).to.equal(newFavorite.productCategory);
+                    expect(saleItem.price).to.equal(newFavorite.price);
+                    expect(saleItem.image).to.equal(newFavorite.image);
+                    expect(saleItem.seller).to.equal(newFavorite.seller);
+                    expect(saleItem.productDescription).to.equal(newFavorite.productDescription);
+                    expect(saleItem.dealLink).to.equal(newFavorite.dealLink);
+                    expect(saleItem.comments).to.equal(newFavorite.comments);
                 });
         });
     });
-    
-    describe('PUT Deal Information', function() {
-        it('should replace an existing deal on PUT', function () {
-            const updateData = {
-                dealName: "PlayStation 4 Slim 1TB Console",
-                productCategory: "Electronics",
-                price: 305,
-                image: "https://images-na.ssl-images-amazon.com/images/I/71PGvPXpk5L._AC_.jpg",
-                seller: "Amazon",
-                productDescription: "Includes a new slim 1TB PlayStation®4 system, a matching DualShock 4 Wireless Controller.",
-                dealLink: "https://www.amazon.com/gp/product/B071CV8CG2/ref=s9_acsd_simh_hd_bw_b710gst_c_x_w?pf_rd_m=ATVPDKIKX0DER&pf_rd_s=merchandised-search-1&pf_rd_r=3F42XATA4ZG774J5S0CZ&pf_rd_t=101&pf_rd_p=13383fcd-a984-4438-a2f3-4286dd71368c&pf_rd_i=6427871011&th=1"
-            };
 
-            return Deal 
-                .findOne()
-                .then(function(deal){
-                    updateData.id = deal.id;
 
-            return chai.request(app)
-                .put(`/deal/${deal.id}`)
-                .send(updateData);
-                })
-                .then(function(res) {
-                    expect(res).to.have.status(202);
-                    return Deal.findById(updateData.id);
-                })
-                .then(function(deal) {
-                    expect(deal.dealName).to.equal(updateData.dealName);
-                    expect(deal.productCategory).to.equal(updateData.productCategory);
-                    expect(deal.price).to.equal(updateData.price);
-                    expect(deal.image).to.equal(updateData.image);
-                    expect(deal.seller).to.equal(updateData.seller);
-                    expect(deal.productDescription).to.equal(updateData.productDescription);
-                    expect(deal.dealLink).to.equal(updateData.dealLink);
-                });
-        });
+    describe('DELETE Deal Information', function() {
+        it('delete deal by id', function() {
+          let deal;
+          agent
+            .set('Authorization', `Bearer ${authToken}`)
+          User
+            .findOne()
+            .then(function(_deal) {
+              deal = _deal;
+              return chai.request(app).delete(`/favorites/${deal.id}`);
+            })
+            .then(function(res) {
+             expect(res).to.have.status(204);
+              return User.findById(deal.id);
+            })
+            .then(function(_deal) {
+              expect(_deal).to.be.null;
+            });
+        }); 
     });
 });

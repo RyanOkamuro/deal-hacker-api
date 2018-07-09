@@ -1,5 +1,5 @@
 'use strict';
-global.DATABASE_URL = 'mongodb://localhost/deal-hacker-db';
+const {TEST_DATABASE_URL} = require('../config');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 
@@ -15,13 +15,9 @@ describe('/api/user', function() {
   const password = 'Sales123456';
   const firstName = 'Jane';
   const lastName = 'McDonald';
-  const usernameB = 'Discounter';
-  const passwordB = 'Deal123456';
-  const firstNameB = 'Tom';
-  const lastNameB = 'Bridge';
 
   before(function() {
-    return runServer();
+    return runServer(TEST_DATABASE_URL);
   });
 
   after(function() {
@@ -329,9 +325,11 @@ describe('/api/user', function() {
             expect(res).to.have.status(201);
             expect(res.body).to.be.an('object');
             expect(res.body).to.have.keys(
+              'id',
               'username',
               'firstName',
-              'lastName'
+              'lastName',
+              'favorites'
             );
             expect(res.body.username).to.equal(username);
             expect(res.body.firstName).to.equal(firstName);
@@ -364,9 +362,11 @@ describe('/api/user', function() {
             expect(res).to.have.status(201);
             expect(res.body).to.be.an('object');
             expect(res.body).to.have.keys(
+              'id',
               'username',
               'firstName',
-              'lastName'
+              'lastName',
+              'favorites'
             );
             expect(res.body.username).to.equal(username);
             expect(res.body.firstName).to.equal(firstName);
@@ -384,43 +384,28 @@ describe('/api/user', function() {
     });
 
     describe('GET', function() {
-      it('Should return an empty array initially', function() {
-        return chai.request(app).get('/api/users').then(res => {
-          expect(res).to.have.status(200);
-          expect(res.body).to.be.an('array');
-          expect(res.body).to.have.length(0);
-        });
-      });
-      it('Should return an array of users', function() {
+      it('Should return a single user', function() {
         return User.create(
           {
             username,
             password,
             firstName,
             lastName
-          },
-          {
-            username: usernameB,
-            password: passwordB,
-            firstName: firstNameB,
-            lastName: lastNameB
           }
         )
           .then(() => chai.request(app).get('/api/users'))
           .then(res => {
             expect(res).to.have.status(200);
             expect(res.body).to.be.an('array');
-            expect(res.body).to.have.length(2);
-            expect(res.body[0]).to.deep.equal({
-              username,
-              firstName,
+            expect(res.body[0].username).equal(
+              username
+            );
+            expect(res.body[0].firstName).equal(
+              firstName
+            );
+            expect(res.body[0].lastName).equal(
               lastName
-            });
-            expect(res.body[1]).to.deep.equal({
-              username: usernameB,
-              firstName: firstNameB,
-              lastName: lastNameB
-            });
+            );
           });
       });
     });

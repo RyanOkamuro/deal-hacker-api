@@ -1,5 +1,5 @@
 'use strict';
-global.DATABASE_URL = 'mongodb://localhost/deal-hacker-db';
+const {TEST_DATABASE_URL} = require('../config');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const jwt = require('jsonwebtoken');
@@ -19,9 +19,10 @@ describe('Auth endpoints', function() {
   const password = 'Sales123456';
   const firstName = 'Jane';
   const lastName = 'McDonald';
+  const favorites = [];
 
   before(function() {
-    return runServer();
+    return runServer(TEST_DATABASE_URL);
   });
 
   after(function() {
@@ -98,10 +99,18 @@ describe('Auth endpoints', function() {
           const payload = jwt.verify(token, JWT_SECRET, {
             algorithm: ['HS256']
           });
-          expect(payload.user).to.deep.equal({
-            username,
-            firstName,
+          console.log(payload.user, '!!!!!!!!!!!!!!!!!');
+          expect({username: payload.user.username}).to.deep.equal({
+            username
+          });
+          expect({firstName: payload.user.firstName}).to.deep.equal({
+            firstName
+          });
+          expect({lastName: payload.user.lastName}).to.deep.equal({
             lastName
+          });
+          expect({favorites: payload.user.favorites}).to.deep.equal({
+            favorites
           });
         });
     });
