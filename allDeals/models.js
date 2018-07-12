@@ -15,8 +15,9 @@ const dealSchema = mongoose.Schema({
     dealLink: {type: String, required: true},
     comments: [{
         comment: {type: String},
-        user: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
-        username: {type: mongoose.Schema.Types.String, ref: "User"}
+        user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+        username: {type: mongoose.Schema.Types.String, ref: 'User'},
+        commentCreatedAt: {type: Date, default: Date.now}
     }],
     createdAt: {type: Date, default: Date.now} 
 });
@@ -37,7 +38,7 @@ dealSchema.methods.serialize = function() {
         comments: this.comments,
         createdAt: this.createdAt
     };
-}
+};
 
 const Deal = mongoose.model('Deal', dealSchema);
 
