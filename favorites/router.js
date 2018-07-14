@@ -11,7 +11,7 @@ router.get('/', (req,res) => {
         .populate('favorites')
         .then(User => res.json(User.serialize()))
         .catch(err => {
-          console.error(err);
+            console.error(err);
             res.status(500).json({message: 'Internal server error'});
         });
 });
@@ -30,16 +30,12 @@ router.post('/', jsonParser, (req, res) => {
         .findOne({_id: req.user.id})
         .exec()
         .then(user => {
-          console.log(req.body.id, user.favorites);
-          console.log(user);
             if(user.favorites.indexOf(req.body.id) > -1){
                 return res.status(200).json({message: 'Favorite exists'});
-              }
-          console.log(user);
+            }
             return user;
         })
         .then(user => {
-          console.log(user);
             return User.findOneAndUpdate({
                 _id: user.id
             },
@@ -49,7 +45,7 @@ router.post('/', jsonParser, (req, res) => {
                 .populate('favorites')
                 .then(user => res.status(201).json(user.serialize()))
                 .catch(err => {
-                  console.error(err);
+                    console.error(err);
                     return res.status(500).json({message: 'Internal server error'});
                 });
         });
@@ -62,11 +58,11 @@ router.delete('/:id', (req, res) => {
         })
         .populate('favorites')
         .then(user => {
-            res.status(204).end()
+            res.status(204).end();
         }
         )
         .catch(err => {
-        console.log(err);
+            console.log(err);
             res.status(500).json({message: 'Internal server error'});
         });
 });

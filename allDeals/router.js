@@ -25,7 +25,7 @@ router.get('/:id', (req,res) => {
         .findById(req.params.id)
         .then(Deal => res.json(Deal.serialize()))
         .catch(err => {
-          console.error(err);
+            console.error(err);
             res.status(500).json({message: 'Internal server error'});
         });
 });

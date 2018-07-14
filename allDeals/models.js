@@ -3,7 +3,6 @@
 const mongoose = require('mongoose');
 
 const dealSchema = mongoose.Schema({
-    // currentTime:{type: String, required: false},
     dealName: {type: String, required: true},
     productCategory: {type: String, required: true},
     price: {type: Number, required: true},
@@ -25,7 +24,6 @@ const dealSchema = mongoose.Schema({
 dealSchema.methods.serialize = function() {
     return {
         id: this._id,
-        // currentTime: this.currentTime,
         dealName: this.dealName,
         productCategory: this.productCategory,
         price: this.price,
