@@ -26,10 +26,10 @@ app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
     if (req.method === 'OPTIONS') {
-      return res.send(204);
+        return res.send(204);
     }
     next();
-  });
+});
 
 app.use(passport.initialize());
 passport.use(localStrategy);
@@ -38,16 +38,16 @@ passport.use(jwtStrategy);
 app.use('/api/users/', usersRouter);
 app.use('/api/auth/', authRouter);
 
-const jwtAuth = passport.authenticate('jwt', {session: false})
+const jwtAuth = passport.authenticate('jwt', {session: false});
 
 app.use('/deal/', dealRouter);
 app.use('/favorites/', jwtAuth, favoritesRouter);
 app.use('/comments/', jwtAuth, commentRouter);
 
 app.get('/api/protected', jwtAuth, (req, res) => {
-  return res.json({
-    data: 'dealDetails'
-  });
+    return res.json({
+        data: 'dealDetails'
+    });
 });
 
 app.use('*', (req, res) => {
@@ -56,36 +56,36 @@ app.use('*', (req, res) => {
 
 let server;
 
-  function runServer(db = DATABASE_URL, port = PORT) {
+function runServer(db = DATABASE_URL, port = PORT) {
     return new Promise((resolve, reject) => {
-      mongoose.connect(db, err => {
-        if (err) {
-          return reject(err);
-        }
-      server = app.listen(port, () => {
-        console.log(`Your app is listening on port ${port}`);
-        resolve();
-      })
-      .on('error', err => {
-        mongoose.disconnect();
-        reject(err);
-      });
+        mongoose.connect(db, err => {
+            if (err) {
+                return reject(err);
+            }
+            server = app.listen(port, () => {
+                console.log(`Your app is listening on port ${port}`);
+                resolve();
+            })
+                .on('error', err => {
+                    mongoose.disconnect();
+                    reject(err);
+                });
+        });
     });
-  });
-};
+}
 
 function closeServer() {
-  return mongoose.disconnect().then(() => {
-    return new Promise((resolve, reject) => {
-    console.log('Closing server');
-    server.close(err => {
-      if (err) {
-        return reject(err);
-      }
-      resolve();
-      });
+    return mongoose.disconnect().then(() => {
+        return new Promise((resolve, reject) => {
+            console.log('Closing server');
+            server.close(err => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve();
+            });
+        });
     });
-  });
 }
 
 /*
@@ -94,7 +94,7 @@ call runServer function if this module is being run by calling node server.js fr
 in a test module, we don't want the server to automatically run, and this conditional block makes that possible
 */
 if (require.main === module) {
-  runServer().catch(err => console.error(err));
-};
+    runServer().catch(err => console.error(err));
+}
 
 module.exports = {app, runServer, closeServer};
