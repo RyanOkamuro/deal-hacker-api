@@ -150,7 +150,7 @@ function tearDownDb() {
     return mongoose.connection.dropDatabase();
 }
 
-describe.only('Favorite deals API resource', function() {
+describe('Favorite deals API resource', function() {
 
     before(function() {
         return runServer(TEST_DATABASE_URL);
