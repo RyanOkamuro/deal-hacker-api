@@ -4,20 +4,17 @@ require('dotenv').config();
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
-const request = require('superagent');
 
 const {User} = require('../users/models');
 const {Deal} = require('../allDeals/models');
 const {app, runServer, closeServer} = require('../server');
-const {TEST_DATABASE_URL} = require('../config');
-const {JWT_SECRET} = require('../config');
+const {TEST_DATABASE_URL, JWT_SECRET} = require('../config');
 const jwt = require('jsonwebtoken');
 const expect = chai.expect;
 
 chai.use(chaiHttp);
 
 let authToken; 
-let agent = request.agent(app);
 
 function seedDealData() {
     console.info('seeding deal info');
@@ -127,6 +124,7 @@ function generateDealData() {
         'comments': generateComments()
     };
 }
+
 function generateAuthToken(index){
     let authToken = jwt.sign(
         {
@@ -152,7 +150,7 @@ function tearDownDb() {
     return mongoose.connection.dropDatabase();
 }
 
-describe('Favorite deals API resource', function() {
+describe.only('Favorite deals API resource', function() {
 
     before(function() {
         return runServer(TEST_DATABASE_URL);
@@ -173,15 +171,12 @@ describe('Favorite deals API resource', function() {
     describe('GET Favorite Deal Information', function() {
         it('should list favorite deal information on GET', function() {
             let res; 
-            // const authToken = generateAuthToken();
-            // console.log(authToken, '%%%%%%%%%');
-            // return chai
-            //     .request(app)
-            agent
+            const authToken = generateAuthToken();
+            return chai
+                .request(app)
                 .get('/favorites')
-                // .set('Authorization', `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken}`)
                 .then(function(_res) {
-                    // console.log(_res, '!!!!!!!!!!');
                     res = _res;
                     expect(res).to.have.status(200);
                     expect(res.body.deal).to.have.lengthOf.at.least(1);
@@ -228,9 +223,11 @@ describe('Favorite deals API resource', function() {
     describe('POST Favorite Deal Information', function() {
         it('should add a new deal to favorites on POST', function() {
             const newFavorite = generateFavoritesData();
+            const authToken = generateAuthToken();
             return chai
-                .set('Authorization', `Bearer ${authToken}`)
+                .request(app)
                 .post('/favorites')
+                .set('Authorization', `Bearer ${authToken}`)
                 .send(newFavorite)
                 .then(function(res) {
                     expect(res).to.have.status(201);
@@ -265,13 +262,13 @@ describe('Favorite deals API resource', function() {
     describe('DELETE Favorite', function() {
         it('delete favorite deal from favorites by id', function() {
             let deal;
-            return chai
-                .request(app)
-                .set('Authorization', `Bearer ${authToken}`)
+            const authToken = generateAuthToken();
+            return User                
                 .findOne()
                 .then(function(_deal) {
                     deal = _deal;
-                    return chai.request(app).delete(`/favorites/${deal.id}`);
+                    return chai.request(app).delete(`/favorites/${deal.id}`)
+                        .set('Authorization', `Bearer ${authToken}`);
                 })
                 .then(function(res) {
                     expect(res).to.have.status(204);
