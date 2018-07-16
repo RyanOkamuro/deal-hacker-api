@@ -4,86 +4,90 @@ require('dotenv').config();
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
+const request = require('superagent');
 
 const {User} = require('../users/models');
+const {Deal} = require('../allDeals/models');
 const {app, runServer, closeServer} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
+const {JWT_SECRET} = require('../config');
+const jwt = require('jsonwebtoken');
 const expect = chai.expect;
 
 chai.use(chaiHttp);
 
-let authToken;
+let authToken; 
+let agent = request.agent(app);
 
 function seedDealData() {
     console.info('seeding deal info');
     const seedData = [];
 
     for (let i=1; i<=4; i++) {
-        seedData.push(generateFavoritesData());
+        seedData.push(generateDealData());
     }
-    return User.insertMany(seedData);
+    return Deal.insertMany(seedData)
+        .then(() => Deal.find())
+        .then((deals) => {
+            const dealsIds = deals.map(deal => deal._id);
+            const userData = [];
+            for (let i=1; i<=4; i++) {
+                userData.push(generateFavoritesData(dealsIds, i));
+                (generateAuthToken(i));
+            }
+            return User.insertMany(userData);
+        })
+        .catch(err => console.log(err));
 }
 
 let randomFavorite = 0;
 
-// function generateDealName() {
-//     const dealName = ['Amazon Fire Stick', 'Dyson DC58/V6 Trigger Cordless Vacuum', 'Apple Watch Series 3 Smartwatch: 42mm', 'Dell XPS 13 128GB SSD 8GB RAM']; 
-//     randomDeal = Math.floor(Math.random() * dealName.length);
-//     return dealName[randomDeal];
-// }
+function generateDealName() {
+    const dealName = ['Amazon Fire Stick', 'Dyson DC58/V6 Trigger Cordless Vacuum', 'Apple Watch Series 3 Smartwatch: 42mm', 'Dell XPS 13 128GB SSD 8GB RAM']; 
+    randomFavorite = Math.floor(Math.random() * dealName.length);
+    return dealName[randomFavorite];
+}
 
-// function generateProductCategory() {
-//     const category = ['Electronics', 'Electronics', 'Electronics', 'Electronics'];
-//     return category[randomDeal];
-// }
+function generateProductCategory() {
+    const category = ['Electronics', 'Electronics', 'Electronics', 'Electronics'];
+    return category[randomFavorite];
+}
 
-// function generatePrice() {
-//     const price = [15, 149.99, 309, 999];
-//     return price[randomDeal];
-// }
+function generatePrice() {
+    const price = [15, 149.99, 309, 999];
+    return price[randomFavorite];
+}
 
-// function generateImage() {
-//     const image = ['https://images-na.ssl-images-amazon.com/images/I/51D8NXwQfvL._SY355_.jpg', 'https://cdn.shopify.com/s/files/1/2459/7473/products/2_2c700c99-6931-4369-85ae-f7a92ad308d5_1024x1024@2x.JPG?v=1528114460', 'https://slimages.macysassets.com/is/image/MCY/products/4/optimized/9005824_fpx.tif?op_sharpen=1&wid=500&hei=613&fit=fit,1&$filtersm$', 'https://johnlewis.scene7.com/is/image/JohnLewis/237128354?$rsp-pdp-main-1440$'];
-//     return image[randomDeal];
-// }
+function generateImage() {
+    const image = ['https://images-na.ssl-images-amazon.com/images/I/51D8NXwQfvL._SY355_.jpg', 'https://cdn.shopify.com/s/files/1/2459/7473/products/2_2c700c99-6931-4369-85ae-f7a92ad308d5_1024x1024@2x.JPG?v=1528114460', 'https://slimages.macysassets.com/is/image/MCY/products/4/optimized/9005824_fpx.tif?op_sharpen=1&wid=500&hei=613&fit=fit,1&$filtersm$', 'https://johnlewis.scene7.com/is/image/JohnLewis/237128354?$rsp-pdp-main-1440$'];
+    return image[randomFavorite];
+}
 
-// function generateSeller() {
-//     const seller = ['Walmart', 'PCMag', 'Macys', 'Dell'];
-//     return seller[randomDeal];
-// }
+function generateSeller() {
+    const seller = ['Walmart', 'PCMag', 'Macys', 'Dell'];
+    return seller[randomFavorite];
+}
 
-// function generateProductDescription() {
-//     const productDescription = ['The next generation of our best-selling Fire TV Stick\n 2013now with the Alexa Voice Remote. \n Walmart has the deal on sale for $15 \n Free shipping with purchases $35+', 'Weighing only 3.4lbs this portable vacuum goes anywhere and does any job with its 2 tier radial cyclone suction. Hygienic bin emptying makes it a quick and clean way to dispose of debris. \n PCMag has the deal on sale for $149.99 \n Free shipping', 'Measure your workouts, from running and cycling to new high-intensity interval training. Track and share your daily activity, and get the motivation you need to hit your goals. Better manage everyday stress and monitor your heart rate more effectively. Automatically sync your favorite playlists. And stay connected to the people and info you care about most.', 'The smallest 13.3-inch laptop on the planet has the world\u2019s first virtually borderless InfinityEdge display and the latest Intel® processors. Touch, Silver, and Rose Gold options available.'];
-//     return productDescription[randomDeal];
-// }
+function generateProductDescription() {
+    const productDescription = ['The next generation of our best-selling Fire TV Stick\n 2013now with the Alexa Voice Remote. \n Walmart has the deal on sale for $15 \n Free shipping with purchases $35+', 'Weighing only 3.4lbs this portable vacuum goes anywhere and does any job with its 2 tier radial cyclone suction. Hygienic bin emptying makes it a quick and clean way to dispose of debris. \n PCMag has the deal on sale for $149.99 \n Free shipping', 'Measure your workouts, from running and cycling to new high-intensity interval training. Track and share your daily activity, and get the motivation you need to hit your goals. Better manage everyday stress and monitor your heart rate more effectively. Automatically sync your favorite playlists. And stay connected to the people and info you care about most.', 'The smallest 13.3-inch laptop on the planet has the world\u2019s first virtually borderless InfinityEdge display and the latest Intel® processors. Touch, Silver, and Rose Gold options available.'];
+    return productDescription[randomFavorite];
+}
 
-// function generateDealLink() {
-//     const dealLink = ['https://www.walmart.com/ip/All-New-F-re-TV-with-4K-Ultra-HD-and-Alexa-Voice-Remote-2017-Edition-Pendant-Streaming-Media-Player/336757733', 'https://shop.pcmag.com/products/dyson-dc58-v6-trigger-cordless-vacuum', 'https://www.macys.com/shop/product/apple-watch-series-3-gps-42mm-space-gray-aluminum-case-with-black-sport-band?ID=5302666&CategoryID=154442#fn=sp%3D1%26spc%3D29%26ruleId%3D78%7CBOOST%20SAVED%20SET%7CBOOST%20ATTRIBUTE%26searchPass%3DmatchNone%26slotId%3D1', 'https://www.dell.com/en-us/shop/dell-laptops/xps-13/spd/xps-13-9360-laptop/fndot5135hv2cl'];
-//     return dealLink[randomDeal];
-// }
+function generateDealLink() {
+    const dealLink = ['https://www.walmart.com/ip/All-New-F-re-TV-with-4K-Ultra-HD-and-Alexa-Voice-Remote-2017-Edition-Pendant-Streaming-Media-Player/336757733', 'https://shop.pcmag.com/products/dyson-dc58-v6-trigger-cordless-vacuum', 'https://www.macys.com/shop/product/apple-watch-series-3-gps-42mm-space-gray-aluminum-case-with-black-sport-band?ID=5302666&CategoryID=154442#fn=sp%3D1%26spc%3D29%26ruleId%3D78%7CBOOST%20SAVED%20SET%7CBOOST%20ATTRIBUTE%26searchPass%3DmatchNone%26slotId%3D1', 'https://www.dell.com/en-us/shop/dell-laptops/xps-13/spd/xps-13-9360-laptop/fndot5135hv2cl'];
+    return dealLink[randomFavorite];
+}
 
-// function generateComments() {
-//     const comments = [{
-//         comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
-//     }];    
-// const comments = [{
-//     comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
-// user: ['John', 'April', 'Bob', 'Jane'],
-// username: ['JohnSmith', 'AprilLane', 'BobSil', 'JaneRed'],
-// commentCreatedAt: ['2018-07-11T16:00:46.067Z', '2018-07-12T16:00:46.067Z', '2018-07-13T16:00:46.067Z', '2018-07-14T16:00:46.067Z']
-// }];
-//     return comments[randomDeal];
-// }
+function generateComments() {
+    const comments = [{
+        comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
+    }];    
+    return comments[randomFavorite];
+}
 
-// function generateCreatedAt() {
-//     const createdAt = ['2018-07-11T16:00:46.067Z', '2018-07-12T16:00:46.067Z', '2018-07-13T16:00:46.067Z', '2018-07-14T16:00:46.067Z'];
-//     return createdAt[randomDeal];
-// }
-
-function generateUserName() {
+function generateUserName(index) {
     const username = ['JohnSmith', 'AprilLane', 'BobSil', 'JaneRed'];
-    randomFavorite = Math.floor(Math.random() * username.length);
-    return username[randomFavorite];
+    return username[index-1];
 }
 
 function generatePassword() {
@@ -101,105 +105,45 @@ function generateLastName() {
     return lastName[Math.floor(Math.random() * lastName.length)];
 }
 
-// function generateFavorites() {
-//     const favorites = [{
-//         dealName: ['Amazon Fire Stick', 'Dyson DC58/V6 Trigger Cordless Vacuum', 'Apple Watch Series 3 Smartwatch: 42mm', 'Dell XPS 13 128GB SSD 8GB RAM'],
-//         productCategory: ['Electronics', 'Electronics', 'Electronics', 'Electronics'],
-//         price: [15, 149.99, 309, 999],
-//         image: ['https://images-na.ssl-images-amazon.com/images/I/51D8NXwQfvL._SY355_.jpg', 'https://cdn.shopify.com/s/files/1/2459/7473/products/2_2c700c99-6931-4369-85ae-f7a92ad308d5_1024x1024@2x.JPG?v=1528114460', 'https://slimages.macysassets.com/is/image/MCY/products/4/optimized/9005824_fpx.tif?op_sharpen=1&wid=500&hei=613&fit=fit,1&$filtersm$', 'https://johnlewis.scene7.com/is/image/JohnLewis/237128354?$rsp-pdp-main-1440$'],
-//         seller: ['Walmart', 'PCMag', 'Macys', 'Dell'],
-//         productDescription: ['The next generation of our best-selling Fire TV Stick\n 2013now with the Alexa Voice Remote. \n Walmart has the deal on sale for $15 \n Free shipping with purchases $35+', 'Weighing only 3.4lbs this portable vacuum goes anywhere and does any job with its 2 tier radial cyclone suction. Hygienic bin emptying makes it a quick and clean way to dispose of debris. \n PCMag has the deal on sale for $149.99 \n Free shipping', 'Measure your workouts, from running and cycling to new high-intensity interval training. Track and share your daily activity, and get the motivation you need to hit your goals. Better manage everyday stress and monitor your heart rate more effectively. Automatically sync your favorite playlists. And stay connected to the people and info you care about most.', 'The smallest 13.3-inch laptop on the planet has the world\u2019s first virtually borderless InfinityEdge display and the latest Intel® processors. Touch, Silver, and Rose Gold options available.'],
-//         dealLink: ['https://www.walmart.com/ip/All-New-F-re-TV-with-4K-Ultra-HD-and-Alexa-Voice-Remote-2017-Edition-Pendant-Streaming-Media-Player/336757733', 'https://shop.pcmag.com/products/dyson-dc58-v6-trigger-cordless-vacuum', 'https://www.macys.com/shop/product/apple-watch-series-3-gps-42mm-space-gray-aluminum-case-with-black-sport-band?ID=5302666&CategoryID=154442#fn=sp%3D1%26spc%3D29%26ruleId%3D78%7CBOOST%20SAVED%20SET%7CBOOST%20ATTRIBUTE%26searchPass%3DmatchNone%26slotId%3D1', 'https://www.dell.com/en-us/shop/dell-laptops/xps-13/spd/xps-13-9360-laptop/fndot5135hv2cl'],
-//         comments: [{
-//             comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
-//         }]  
-//     }]; 
-//     return favorites[Math.floor(Math.random() * favorites.length)];  
-// }
-
-function generateFavorites() {
-    let favorites = new Array();
-    favorites = [{
-        dealName: 'Amazon Fire Stick',
-        productCategory: 'Electronics', 
-        price: 15,
-        image: 'https://images-na.ssl-images-amazon.com/images/I/51D8NXwQfvL._SY355_.jpg',
-        seller: 'Walmart',
-        productDescription: 'The next generation of our best-selling Fire TV Stick\n 2013now with the Alexa Voice Remote. \n Walmart has the deal on sale for $15 \n Free shipping with purchases $35+',
-        dealLink: 'https://www.walmart.com/ip/All-New-F-re-TV-with-4K-Ultra-HD-and-Alexa-Voice-Remote-2017-Edition-Pendant-Streaming-Media-Player/336757733',
-        comments: [{
-            comment: 'Best reason to disconnect from cable',
-            user: '1212525135',
-            username: 'JohnSmith',
-            commentCreatedAt: '2018-07-11T16:00:46.067Z'
-        }]  
-    },
-    {
-        dealName: 'Dyson DC58/V6 Trigger Cordless Vacuum',
-        productCategory: 'Electronics', 
-        price: 149.99,
-        image: 'https://cdn.shopify.com/s/files/1/2459/7473/products/2_2c700c99-6931-4369-85ae-f7a92ad308d5_1024x1024@2x.JPG?v=1528114460',
-        seller: 'Walmart',
-        productDescription: 'Weighing only 3.4lbs this portable vacuum goes anywhere and does any job with its 2 tier radial cyclone suction. Hygienic bin emptying makes it a quick and clean way to dispose of debris. \n PCMag has the deal on sale for $149.99 \n Free shipping',
-        dealLink: 'https://shop.pcmag.com/products/dyson-dc58-v6-trigger-cordless-vacuum',
-        comments: [{
-            comment: 'Keeps the house clean all day long',
-            user: '1212525145',
-            username: 'AprilLane',
-            commentCreatedAt: '2018-07-12T16:00:46.067Z'
-        }]  
-    },
-    {
-        dealName: 'Apple Watch Series 3 Smartwatch: 42mm',
-        productCategory: 'Electronics', 
-        price: 309,
-        image: 'https://www.macys.com/shop/product/apple-watch-series-3-gps-42mm-space-gray-aluminum-case-with-black-sport-band?ID=5302666&CategoryID=154442#fn=sp%3D1%26spc%3D29%26ruleId%3D78%7CBOOST%20SAVED%20SET%7CBOOST%20ATTRIBUTE%26searchPass%3DmatchNone%26slotId%3D1',
-        seller: 'Walmart',
-        productDescription: 'Measure your workouts, from running and cycling to new high-intensity interval training. Track and share your daily activity, and get the motivation you need to hit your goals. Better manage everyday stress and monitor your heart rate more effectively. Automatically sync your favorite playlists. And stay connected to the people and info you care about most.',
-        dealLink: 'https://www.walmart.com/ip/All-New-F-re-TV-with-4K-Ultra-HD-and-Alexa-Voice-Remote-2017-Edition-Pendant-Streaming-Media-Player/336757733',
-        comments: [{
-            comment: 'Battery lasts about 1 day per charge',
-            user: '1212525155',
-            username: 'BobSil',
-            commentCreatedAt: '2018-07-13T16:00:46.067Z'
-        }]  
-    },
-    {
-        dealName: 'Dell XPS 13 128GB SSD 8GB RAM',
-        productCategory: 'Electronics', 
-        price: 999,
-        image: 'https://johnlewis.scene7.com/is/image/JohnLewis/237128354?$rsp-pdp-main-1440$',
-        seller: 'Walmart',
-        productDescription: 'The smallest 13.3-inch laptop on the planet has the world\u2019s first virtually borderless InfinityEdge display and the latest Intel® processors. Touch, Silver, and Rose Gold options available.',
-        dealLink: 'https://www.dell.com/en-us/shop/dell-laptops/xps-13/spd/xps-13-9360-laptop/fndot5135hv2cl',
-        comments: [{
-            comment: 'Best ultrabook around for the price',
-            user: '1212525125',
-            username: 'JaneRed',
-            commentCreatedAt: '2018-07-14T16:00:46.067Z'
-        }]  
-    }];  
-    return favorites[Math.floor(Math.random() * favorites.length)];  
-}
-
-function generateFavoritesData() {
+function generateFavoritesData(dealsIds, index) {
     return {
-        'username': generateUserName(),
-        'password': generatePassword(),
-        'firstName': generateFirstName(),
-        'lastName': generateLastName(),
-        'favorites': generateFavorites()
-        // [{
-        // 'dealName': generateDealName(),
-        // 'productCategory': generateProductCategory(),
-        // 'price': generatePrice(),
-        // 'image': generateImage(),
-        // 'seller': generateSeller(),
-        // 'productDescription': generateProductDescription(),
-        // 'dealLink': generateDealLink(),
-        // 'comments': generateComments(),
-        // 'createdAt': generateCreatedAt()
-        // }]  
+        username: generateUserName(index),
+        password: generatePassword(),
+        firstName: generateFirstName(),
+        lastName: generateLastName(),
+        favorites: dealsIds
+    };  
+}  
+
+function generateDealData() {
+    return {
+        'dealName': generateDealName(),
+        'productCategory': generateProductCategory(),
+        'price': generatePrice(),
+        'image': generateImage(),
+        'seller': generateSeller(),
+        'productDescription': generateProductDescription(),
+        'dealLink': generateDealLink(),
+        'comments': generateComments()
+    };
+}
+function generateAuthToken(index){
+    let authToken = jwt.sign(
+        {
+            user: {
+                username: generateUserName(index),
+                firstName: generateFirstName(),
+                lastName: generateLastName()
+            }
+        },
+        JWT_SECRET,
+        {
+            algorithm: 'HS256',
+            expiresIn: '7d'
+        }
+    );
+    return {
+        authToken
     };
 }
 
@@ -227,13 +171,17 @@ describe('Favorite deals API resource', function() {
     });
 
     describe('GET Favorite Deal Information', function() {
-        it.only('should list favorite deal information on GET', function() {
+        it('should list favorite deal information on GET', function() {
             let res; 
-            return chai
-                .request(app)
+            // const authToken = generateAuthToken();
+            // console.log(authToken, '%%%%%%%%%');
+            // return chai
+            //     .request(app)
+            agent
                 .get('/favorites')
-                .set('Authorization', `Bearer ${authToken}`)
+                // .set('Authorization', `Bearer ${authToken}`)
                 .then(function(_res) {
+                    // console.log(_res, '!!!!!!!!!!');
                     res = _res;
                     expect(res).to.have.status(200);
                     expect(res.body.deal).to.have.lengthOf.at.least(1);
