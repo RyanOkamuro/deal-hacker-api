@@ -12,9 +12,9 @@ const {TEST_DATABASE_URL, JWT_SECRET} = require('../config');
 const jwt = require('jsonwebtoken');
 const expect = chai.expect;
 
-chai.use(chaiHttp);
+let dealsIds;
 
-let authToken; 
+chai.use(chaiHttp);
 
 function seedDealData() {
     console.info('seeding deal info');
@@ -26,7 +26,7 @@ function seedDealData() {
     return Deal.insertMany(seedData)
         .then(() => Deal.find())
         .then((deals) => {
-            const dealsIds = deals.map(deal => deal._id);
+            dealsIds = deals.map(deal => deal._id);
             const userData = [];
             for (let i=1; i<=4; i++) {
                 userData.push(generateFavoritesData(dealsIds, i));
@@ -83,6 +83,7 @@ function generateComments() {
 }
 
 function generateUserName(index) {
+    if(!index) index = 0;
     const username = ['JohnSmith', 'AprilLane', 'BobSil', 'JaneRed'];
     return username[index-1];
 }
@@ -125,13 +126,14 @@ function generateDealData() {
     };
 }
 
-function generateAuthToken(index){
+function generateAuthToken(username, firstName, lastName, id){
     let authToken = jwt.sign(
         {
             user: {
-                username: generateUserName(index),
-                firstName: generateFirstName(),
-                lastName: generateLastName()
+                id: id,
+                username: username || generateUserName(),
+                firstName: firstName || generateFirstName(),
+                lastName: lastName || generateLastName()
             }
         },
         JWT_SECRET,
@@ -171,89 +173,96 @@ describe('Favorite deals API resource', function() {
     describe('GET Favorite Deal Information', function() {
         it('should list favorite deal information on GET', function() {
             let res; 
-            const authToken = generateAuthToken();
-            return chai
-                .request(app)
-                .get('/favorites')
-                .set('Authorization', `Bearer ${authToken}`)
-                .then(function(_res) {
-                    res = _res;
-                    expect(res).to.have.status(200);
-                    expect(res.body.deal).to.have.lengthOf.at.least(1);
-                    return User.count();
-                })
-                .then(function(count) {
-                    expect(res.body.deal).to.have.lengthOf(count);
+            let _user;
+            return User                
+                .findOne()
+                .then(function(user) {
+                    _user = user;
+                    const auth = generateAuthToken(user.username, user.firstName, user.lastName, user._id);
+                    return chai
+                        .request(app)
+                        .get('/favorites')
+                        .set('Authorization', `Bearer ${auth.authToken}`)
+                        .then(function(_res) {
+                            res = _res;
+                            expect(res).to.have.status(200);
+                            expect(res.body.favorites).to.be.a('array');
+                        });
                 });
         });
 
         it('should return the correct fields for favorite deal', function() {
-            let resDeal;
-            return chai
-                .request(app)
-                .get('/favorites')
-                .set('Authorization', `Bearer ${authToken}`)
-                .then(function(res) {
-                    expect(res).to.have.status(200);
-                    expect(res).to.be.json;
-                    expect(res.body.deal).to.be.a('array');
-                    expect(res.body.deal).to.have.lengthOf.at.least(1);
-                    const expectedKeys = ['dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink', 'comments'];
-                    res.body.deal.forEach(function(saleItem) {
-                        expect(saleItem).to.be.a('object');
-                        expect(saleItem).to.include.keys(expectedKeys);
-                    });
-                    resDeal = res.body.deal[0];
-                    return User.findById(resDeal.id);
-                })
-                .then(function(saleItem) {
-                    expect(resDeal.id).to.equal(saleItem.id);
-                    expect(resDeal.dealName).to.equal(saleItem.dealName);
-                    expect(resDeal.productCategory).to.equal(saleItem.productCategory);
-                    expect(resDeal.price).to.equal(saleItem.price);
-                    expect(resDeal.image).to.equal(saleItem.image);
-                    expect(resDeal.seller).to.equal(saleItem.seller);
-                    expect(resDeal.productDescription).to.equal(saleItem.productDescription);
-                    expect(resDeal.dealLink).to.equal(saleItem.dealLink);
-                    expect(resDeal.comments).to.equal(saleItem.comments);
+            let resFavorite;
+            let _user;
+            return User                
+                .findOne()
+                .then(function(user) {
+                    _user = user;
+                    const auth = generateAuthToken(user.username, user.firstName, user.lastName, user._id);
+                    return chai
+                        .request(app)
+                        .get('/favorites')
+                        .set('Authorization', `Bearer ${auth.authToken}`)
+                        .then(function(res) {
+                            expect(res).to.have.status(200);
+                            expect(res).to.be.json;
+                            expect(res.body.favorites).to.be.a('array');
+                            expect(res.body.favorites).to.have.lengthOf.at.least(1);
+                            const expectedKeys = ['dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink', 'comments'];
+                            res.body.favorites.forEach(function(saleItem) {
+                                expect(saleItem).to.be.a('object');
+                                expect(saleItem).to.include.keys(expectedKeys);
+                            });
+                            resFavorite = res.body.favorites[0];
+                            return resFavorite;   
+                        })
+                        .then(function(saleItem) {
+                            expect(resFavorite._id).to.equal(saleItem._id);
+                            expect(resFavorite.dealName).to.equal(saleItem.dealName);
+                            expect(resFavorite.productCategory).to.equal(saleItem.productCategory);
+                            expect(resFavorite.price).to.equal(saleItem.price);
+                            expect(resFavorite.image).to.equal(saleItem.image);
+                            expect(resFavorite.seller).to.equal(saleItem.seller);
+                            expect(resFavorite.productDescription).to.equal(saleItem.productDescription);
+                            expect(resFavorite.dealLink).to.equal(saleItem.dealLink);
+                            expect(resFavorite.comments).to.equal(saleItem.comments);
+                        });
                 });
         });
     });
 
     describe('POST Favorite Deal Information', function() {
         it('should add a new deal to favorites on POST', function() {
-            const newFavorite = generateFavoritesData();
-            const authToken = generateAuthToken();
-            return chai
-                .request(app)
-                .post('/favorites')
-                .set('Authorization', `Bearer ${authToken}`)
-                .send(newFavorite)
-                .then(function(res) {
-                    expect(res).to.have.status(201);
-                    expect(res).to.be.json;
-                    expect(res.body).to.be.a('object');
-                    expect(res.body).to.include.keys('dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink', 'comments');
-                    expect(res.body.dealName).to.equal(newFavorite.dealName);
-                    expect(res.body.productCategory).to.equal(newFavorite.productCategory);
-                    expect(res.body.price).to.equal(newFavorite.price);
-                    expect(res.body.image).to.equal(newFavorite.image);
-                    expect(res.body.seller).to.equal(newFavorite.seller);
-                    expect(res.body.productDescription).to.equal(newFavorite.productDescription);
-                    expect(res.body.dealLink).to.equal(newFavorite.dealLink);
-                    expect(res.body.comments).to.equal(newFavorite.comments);
-                    expect(res.body.id).to.not.be.null;
-                    return User.findById(res.body.id);
-                })
-                .then(function(saleItem) {
-                    expect(saleItem.dealName).to.equal(newFavorite.dealName);
-                    expect(saleItem.productCategory).to.equal(newFavorite.productCategory);
-                    expect(saleItem.price).to.equal(newFavorite.price);
-                    expect(saleItem.image).to.equal(newFavorite.image);
-                    expect(saleItem.seller).to.equal(newFavorite.seller);
-                    expect(saleItem.productDescription).to.equal(newFavorite.productDescription);
-                    expect(saleItem.dealLink).to.equal(newFavorite.dealLink);
-                    expect(saleItem.comments).to.equal(newFavorite.comments);
+            let resfavoriteItem;
+            let _user;
+            let _deal;
+            let auth;
+            return Deal
+                .create(generateDealData())
+                .then(deal => {
+                    _deal = deal;
+                    return User                
+                        .findOne()
+                        .then(function(user) {
+                            _user = user;
+                            return auth = generateAuthToken(user.username, user.firstName, user.lastName, user._id);
+                        })
+                        .then(auth => {
+                            return chai
+                                .request(app)
+                                .post('/favorites')
+                                .set('Authorization', `Bearer ${auth.authToken}`)
+                                .send({id: _deal._id})
+                                .then(function(res) {
+                                    expect(res).to.have.status(201);
+                                    expect(res).to.be.json;
+                                    resfavoriteItem = res.body.favorites[res.body.favorites.length-1];
+                                    return resfavoriteItem; 
+                                })
+                                .then(function(resfavoriteItem) {
+                                    expect(resfavoriteItem._id).to.equal(_deal._id.toString());
+                                });
+                        });
                 });
         });
     });
@@ -261,21 +270,24 @@ describe('Favorite deals API resource', function() {
 
     describe('DELETE Favorite', function() {
         it('delete favorite deal from favorites by id', function() {
-            let deal;
-            const authToken = generateAuthToken();
+            let _user;
+            let _favoriteId;
             return User                
                 .findOne()
-                .then(function(_deal) {
-                    deal = _deal;
-                    return chai.request(app).delete(`/favorites/${deal.id}`)
-                        .set('Authorization', `Bearer ${authToken}`);
+                .then(function(user) {
+                    _user = user;
+                    _favoriteId = user.favorites[0];
+                    const auth = generateAuthToken(user.username, user.firstName, user.lastName);
+                    return chai.request(app)
+                        .delete(`/favorites/${_favoriteId}`)
+                        .set('Authorization', `Bearer ${auth.authToken}`);
                 })
                 .then(function(res) {
                     expect(res).to.have.status(204);
-                    return User.findById(deal.id);
+                    return User.findOne({_id: _user._id, favorites: _favoriteId});
                 })
-                .then(function(_deal) {
-                    expect(_deal).to.be.null;
+                .then(function(user) {
+                    expect(user).to.be.null;
                 });
         }); 
     });

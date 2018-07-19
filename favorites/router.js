@@ -9,7 +9,7 @@ router.get('/', (req,res) => {
     User
         .findById(req.user.id)
         .populate('favorites')
-        .then(User => res.json(User.serialize()))
+        .then(user => res.json(user.serialize()))
         .catch(err => {
             console.error(err);
             res.status(500).json({message: 'Internal server error'});
@@ -30,18 +30,12 @@ router.post('/', jsonParser, (req, res) => {
         .findOne({_id: req.user.id})
         .exec()
         .then(user => {
-            if(user.favorites.indexOf(req.body.id) > -1){
-                return res.status(200).json({message: 'Favorite exists'});
-            }
-            return user;
-        })
-        .then(user => {
             return User.findOneAndUpdate({
-                _id: user.id
+                _id: user._id
             },
             { 
-                $push: {favorites: req.body.id}
-            }, {upsert: true})
+                $addToSet: {favorites: req.body.id}
+            }, {upsert: true, new: true})
                 .populate('favorites')
                 .then(user => res.status(201).json(user.serialize()))
                 .catch(err => {
@@ -53,11 +47,10 @@ router.post('/', jsonParser, (req, res) => {
 
 router.delete('/:id', (req, res) => {
     User
-        .findOneAndUpdate({_id: req.user.id}, { 
+        .findOneAndUpdate({username: req.user.username}, { 
             $pull: {'favorites': req.params.id}
         })
-        .populate('favorites')
-        .then(user => {
+        .then(() => {
             res.status(204).end();
         }
         )
