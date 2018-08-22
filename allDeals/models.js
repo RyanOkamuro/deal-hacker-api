@@ -14,7 +14,8 @@ const dealSchema = mongoose.Schema({
         comment: {type: String},
         user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
         username: {type: mongoose.Schema.Types.String, ref: 'User'},
-        commentCreatedAt: {type: Date, default: Date.now}
+        commentCreatedAt: {type: Date, default: Date.now},
+        deal_id: {type: mongoose.Schema.Types.ObjectId}
     }],
     createdAt: {type: Date, default: Date.now} 
 });
