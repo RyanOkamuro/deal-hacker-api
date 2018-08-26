@@ -4,7 +4,7 @@ require('dotenv').config();
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
-
+const {User} = require('../users/models');
 const {Deal} = require('../allDeals/models');
 const {app, runServer, closeServer} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
@@ -21,7 +21,11 @@ function seedDealData() {
     for (let i=1; i<=4; i++) {
         seedData.push(generateDealData());
     }
-    return Deal.insertMany(seedData);
+    return Deal.insertMany(seedData)
+        .then(() => {
+            return User.insertMany([{username: 'newuser', firstName: 'john', lastName: 'smith', password: '$2a$10$e0MH4k7wVdhPJYcrByPL7OeYj85xu7o0/kU183JYqUsWni7HtT7Dy'}])
+                .then(() => loginUser());
+        });
 }
 
 let randomDeal = 0;
@@ -64,9 +68,9 @@ function generateDealLink() {
 
 function generateComments() {
     const comments = [{
-        comment: ['Best reason to disconnect from cable', 'Keeps the house clean all day long', 'Battery lasts about 1 day per charge', 'Best ultrabook around for the price'],
+        comment: ['Best reason to disconnect from cable'],
     }];
-    return comments[randomDeal];
+    return comments;
 }
 
 function generateDealData() {
@@ -85,6 +89,17 @@ function generateDealData() {
 function tearDownDb() {
     console.warn('Delete database');
     return mongoose.connection.dropDatabase();
+}
+
+function loginUser() {
+    return chai
+        .request(app)
+        .post('/api/auth/login')
+        .send({username: 'newuser', password: 'demopassword'})
+        .then(function(_res) {
+            authToken = _res.body.authToken;
+            return false;
+        });
 }
 
 describe('Comments API resource', function() {
@@ -110,7 +125,6 @@ describe('Comments API resource', function() {
             const updateData = {
                 userComment: 'Perfect gaming system'
             };
-
             return Deal 
                 .findOne()
                 .then(function(dbDeal){
@@ -126,22 +140,27 @@ describe('Comments API resource', function() {
         });
     });
 
-    // describe('DELETE Deal Information', function() {
-    //     it('delete deal by id', function() {
-    //       let deal;
-    //       return Deal
-    //         .findOne()
-    //         .then(function(_deal) {
-    //           deal = _deal;
-    //           return chai.request(app).delete(`/deal/${deal.id}`);
-    //         })
-    //         .then(function(res) {
-    //          expect(res).to.have.status(204);
-    //           return Deal.findById(deal.id);
-    //         })
-    //         .then(function(_deal) {
-    //           expect(_deal).to.be.null;
-    //         });
-    //     }); 
-    // });
+    describe('DELETE Comment', function() {
+        it('delete comment by id', function() {
+            let deal;
+            let commentId;
+            return Deal
+                .findOne()
+                .then(function(_deal) {
+                    deal = _deal;
+                    let commentInfo = deal.comments;
+                    let commentId = commentInfo[0]._id;
+                    return chai.request(app)
+                        .delete(`/comments/${commentId}/${deal._id}`)
+                        .set('Authorization', `Bearer ${authToken}`);
+                })
+                .then(function(res) {
+                    expect(res).to.have.status(204);
+                    return Deal.findById(commentId);
+                })
+                .then(function(_deal) {
+                    expect(_deal).to.be.null;
+                });
+        }); 
+    });
 });

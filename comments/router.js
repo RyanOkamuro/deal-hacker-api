@@ -26,10 +26,10 @@ router.post('/:dealId', jsonParser, (req, res) => {
         });
 });
 
-router.delete('/:dealId', (req, res) => {
+router.delete('/:commentId/:dealId', (req, res) => {
     Deal
         .findOneAndUpdate({_id: req.params.dealId}, { 
-            $pull: {comments: {user: req.user.id, _id: req.body._id}}
+            $pull: {comments: {_id: req.params.commentId}}
         })
         .then(() => {
             res.status(204).end();

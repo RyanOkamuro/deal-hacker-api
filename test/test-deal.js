@@ -225,4 +225,22 @@ describe('Deal Information API resource', function() {
                 });
         });
     });
+    describe('DELETE Deal Information', function() {
+        it('delete deal by id', function() {
+            let deal;
+            return Deal
+                .findOne()
+                .then(function(_deal) {
+                    deal = _deal;
+                    return chai.request(app).delete(`/deal/${deal.id}`);
+                })
+                .then(function(res) {
+                    expect(res).to.have.status(204);
+                    return Deal.findById(deal.id);
+                })
+                .then(function(_deal) {
+                    expect(_deal).to.be.null;
+                });
+        }); 
+    });
 });
