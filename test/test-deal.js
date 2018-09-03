@@ -5,7 +5,7 @@ const chai = require('chai');
 
 const chaiHttp = require('chai-http');
 const mongoose = require('mongoose');
-
+const {User} = require('../users/models');
 const {Deal} = require('../allDeals/models');
 const {app, runServer, closeServer} = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
@@ -22,7 +22,11 @@ function seedDealData() {
     for (let i=1; i<=4; i++) {
         seedData.push(generateDealData());
     }
-    return Deal.insertMany(seedData);
+    return Deal.insertMany(seedData)
+        .then(() => {
+            return User.insertMany([{username: 'newuser', firstName: 'john', lastName: 'smith', password: '$2a$10$e0MH4k7wVdhPJYcrByPL7OeYj85xu7o0/kU183JYqUsWni7HtT7Dy'}])
+                .then(() => loginUser());
+        });
 }
 
 let randomDeal = 0;
@@ -86,6 +90,17 @@ function generateDealData() {
 function tearDownDb() {
     console.warn('Delete database');
     return mongoose.connection.dropDatabase();
+}
+
+function loginUser() {
+    return chai
+        .request(app)
+        .post('/api/auth/login')
+        .send({username: 'newuser', password: 'demopassword'})
+        .then(function(_res) {
+            authToken = _res.body.authToken;
+            return false;
+        });
 }
 
 describe('Deal Information API resource', function() {
@@ -163,6 +178,7 @@ describe('Deal Information API resource', function() {
                 .request(app)
                 .post('/deal')
                 .send(newDeal)
+                .set('Authorization', `Bearer ${authToken}`)
                 .then(function(res) {
                     expect(res).to.have.status(201);
                     expect(res).to.be.json;
