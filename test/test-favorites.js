@@ -178,6 +178,7 @@ describe('Favorite deals API resource', function() {
                 .findOne()
                 .then(function(user) {
                     _user = user;
+                    console.log(user);
                     const auth = generateAuthToken(user.username, user.firstName, user.lastName, user._id);
                     return chai
                         .request(app)

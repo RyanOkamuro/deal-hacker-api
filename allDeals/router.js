@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
+const passport = require('passport');
 
 const {Deal} = require('./models');
 
@@ -30,7 +31,9 @@ router.get('/:id', (req,res) => {
         });
 });
 
-router.post('/', jsonParser, (req, res) => {
+const jwtAuth = passport.authenticate('jwt', {session: false});
+
+router.post('/', jsonParser, jwtAuth, (req, res) => {
     const requiredFields = ['dealName', 'productCategory', 'price', 'image', 'seller', 'productDescription', 'dealLink'];
     for (let i = 0; i < requiredFields.length; i++) {
         const field = requiredFields[i];
@@ -40,7 +43,6 @@ router.post('/', jsonParser, (req, res) => {
             return res.status(400).send(message);
         }
     }
-  
     Deal
         .create({
             dealName: req.body.dealName,
@@ -53,6 +55,7 @@ router.post('/', jsonParser, (req, res) => {
             favoriteClass: req.body.favoriteClass,
             productDescription: req.body.productDescription,
             dealLink: req.body.dealLink,
+            user: req.user.id
         })
         .then(dealItem => res.status(201).json(dealItem.serialize()))
         .catch(err => {

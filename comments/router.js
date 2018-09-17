@@ -17,9 +17,24 @@ router.post('/:dealId', jsonParser, (req, res) => {
     }
     Deal
         .findOneAndUpdate({_id: req.params.dealId}, { 
-            $push: {comments: {comment: req.body.userComment, user: req.user.id, username: req.user.username, _id: req.params.dealId}}
+            $push: {comments: {comment: req.body.userComment, user: req.user.id, username: req.user.username, deal_id: req.params.dealId}}
         }, {new: true})
         .then(deal => res.status(201).json(deal.comments))
+        .catch(err => {
+            console.error(err);
+            res.status(500).json({message: 'Internal server error'});
+        });
+});
+
+router.delete('/:commentId/:dealId', (req, res) => {
+    Deal
+        .findOneAndUpdate({_id: req.params.dealId}, { 
+            $pull: {comments: {_id: req.params.commentId}}
+        })
+        .then(() => {
+            res.status(204).end();
+        }
+        )
         .catch(err => {
             console.error(err);
             res.status(500).json({message: 'Internal server error'});
